@@ -2,25 +2,39 @@
 
 set -eu
 
-ARCH=$(uname -m)
+ARCH="$(uname -m)"
 
 echo "Installing package dependencies..."
 echo "---------------------------------------------------------------"
-# pacman -Syu --noconfirm PACKAGESHERE
+pacman -Syu --noconfirm dotnet-sdk
 
 echo "Installing debloated packages..."
 echo "---------------------------------------------------------------"
 get-debloated-pkgs --add-common --prefer-nano
 
-# Comment this out if you need an AUR package
-#make-aur-package PACKAGENAME
+echo "Building pinta (gtk3 branch)..."
+echo "---------------------------------------------------------------"
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+export DOTNET_NOLOGO=1
 
-# If the application needs to be manually built that has to be done down here
+git clone --depth 1 --branch gtk3 https://github.com/PintaProject/Pinta.git ./pinta-src && (
+	cd ./pinta-src
+	# The gtk3 branch targets net7.0; bump to net10.0 to match the dotnet-sdk
+	sed -i 's/net7.0/net10.0/g' Directory.Build.props
 
-# if you also have to make nightly releases check for DEVEL_RELEASE = 1
-#
-# if [ "${DEVEL_RELEASE-}" = 1 ]; then
-# 	nightly build steps
-# else
-# 	regular build steps
-# fi
+	dotnet publish ./Pinta/Pinta.csproj \
+		-c Release                  \
+		-r linux-x64                \
+		--self-contained true       \
+		-p:BuildTranslations=true   \
+		-p:PublishDir=/usr/lib/pinta
+
+	# dlopen'd lazily only when tracing, would drag in liblttng-ust
+	rm -f /usr/lib/pinta/libcoreclrtraceptprovider.so
+
+	cp -r /usr/lib/pinta/icons/hicolor /usr/share/icons
+	sed 's/^_//' ./xdg/pinta.desktop.in > /usr/share/applications/pinta.desktop
+	cp -r /usr/lib/pinta/locale/. /usr/share/locale
+
+	awk -F'<|>' '/<Version>/{print $3; exit}' ./Directory.Build.props | sed 's/\.0$//' > ~/version
+)
