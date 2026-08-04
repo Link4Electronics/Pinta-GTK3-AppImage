@@ -26,6 +26,8 @@ git clone --depth 1 --branch gtk3 https://github.com/PintaProject/Pinta.git ./pi
 		-c Release                  \
 		-r linux-x64                \
 		--self-contained true       \
+		-p:PublishTrimmed=true      \
+		-p:TrimMode=partial         \
 		-p:BuildTranslations=true   \
 		-p:PublishDir=/usr/lib/pinta
 
