@@ -9,6 +9,7 @@ export ADD_HOOKS="self-updater.bg.hook"
 export UPINFO="gh-releases-zsync|${GITHUB_REPOSITORY%/*}|${GITHUB_REPOSITORY#*/}|latest|*$ARCH.AppImage.zsync"
 export DESKTOP=/usr/share/applications/pinta.desktop
 export ICON=/usr/share/icons/hicolor/96x96/apps/pinta.png
+export ALWAYS_SOFTWARE=1 # gtk3 app
 
 mkdir -p ./AppDir/bin
 cp -r /usr/lib/pinta/* ./AppDir/bin
